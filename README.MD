@@ -14,3 +14,5 @@ Experiment to measure the difference in running time between our potentially ine
 ## 1.4
 Modify dup2 to print the names of all files in which each duplicated line occurs.
 
+
+Adding lessons from boot.dev

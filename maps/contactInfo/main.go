@@ -14,7 +14,6 @@ func getUserMap(names []string, phoneNumbers []int) (map[string]user, error) {
 			name:        names[i],
 			phoneNumber: phoneNumbers[i],
 		}
-
 	}
 	return userMap, nil
 

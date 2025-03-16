@@ -9,6 +9,7 @@ import (
 */
 
 func removeProfanity(message *string) {
+
 	badWords := map[string]string{
 		"fubb":  "****",
 		"shiz":  "****",

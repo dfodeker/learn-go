@@ -13,6 +13,8 @@ type RequestBody struct {
 	Variables interface{} `json:"variables"` // Use `map[string]interface{}` if it's a dynamic object
 }
 
+//make a request to shop to create a product
+
 func main() {
 	query := `
 		mutation createProductAsynchronous($productSet: ProductSetInput!, $synchronous: Boolean!) {

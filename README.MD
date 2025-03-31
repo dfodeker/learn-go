@@ -1,6 +1,6 @@
 ##  Exercises to practice with the Go Programming Language
 
-Lessonts from "The Go Programming Language" by Alan A. A. Donovan & Brian W. Kernighan and Boot.Dev,. This repository contains exercises from the book and Boot.dev's Go course[https://www.boot.dev/courses/learn-golang] it was incredibly helpful and I would strongly recomend it to anyone anyone learning go.
+Lessonts from "The Go Programming Language" by Alan A. A. Donovan & Brian W. Kernighan and Boot.Dev,. This repository contains exercises from the book and Boot.dev's Go course [Boot.dev's Go course](https://www.boot.dev/courses/learn-golang) it was incredibly helpful and I would strongly recomend it to anyone anyone learning go.
 
 ### 1.1
 Modify the echo program to also print os.Args[0], the name of the command that invoked it.

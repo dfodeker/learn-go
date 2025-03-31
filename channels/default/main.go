@@ -6,6 +6,18 @@ import (
 
 func saveBackups(snapshotTicker, saveAfter <-chan time.Time, logChan chan string) {
 	// ?
+	for {
+		select {
+		case <-snapshotTicker:
+			takeSnapshot(logChan)
+		case <-saveAfter:
+			saveSnapshot(logChan)
+			return
+		default:
+			waitForData(logChan)
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
 }
 
 // don't touch below this line

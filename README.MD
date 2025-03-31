@@ -45,7 +45,7 @@ To run the exercises, make sure you have Go installed on your system.
    go test
    ```
 ## 📌 Notes
-The exercises are based on personal learning and practice.
+
 
 Contributions are welcome! Feel free to open issues or pull requests.
 

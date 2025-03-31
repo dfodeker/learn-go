@@ -30,8 +30,9 @@ To run the exercises, make sure you have Go installed on your system.
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/your-username/go-exercises.git
-   cd go-exercises
+   git clone https://github.com/dfodeker/learn-go.git
+   cd learn-go
+
    ```
 2. Navigate to the exercise directory you want to run.
 3. Run the Go program:

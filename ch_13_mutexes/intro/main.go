@@ -11,12 +11,16 @@ type safeCounter struct {
 }
 
 func (sc safeCounter) inc(key string) {
-	// ?
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
 	sc.slowIncrement(key)
+
 }
 
 func (sc safeCounter) val(key string) int {
 	// ?
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
 	return sc.slowVal(key)
 }
 

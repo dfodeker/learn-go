@@ -12,7 +12,7 @@ func getLast[T any](s []T) T {
 }
 
 //generic function that returns the last element from a slice
-/*
+/* sorryyyy
 usage// example
 func splitAnySlice[T any](s []T) ([]T, []T) {
     mid := len(s)/2

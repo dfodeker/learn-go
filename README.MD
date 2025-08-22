@@ -55,4 +55,4 @@ Special thanks to:
 Alan A. A. Donovan & Brian W. Kernighan for their fantastic book.
 
 Boot.dev for their well-structured Go course.
-ps.Sorry I didn't pay for the course, but I still want to learn Go.
+ps.I paid for it eventually.

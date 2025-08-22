@@ -87,21 +87,3 @@ func getCleanedBody(body string, badWords map[string]struct{}) string {
 	cleaned := strings.Join(words, " ")
 	return cleaned
 }
-
-// func cleanRequestBody(sentence string) string {
-//
-
-// 	sentenceArr := strings.Split(sentence, " ")
-// 	for i, senWord := range sentenceArr {
-// 		s := strings.ToLower(senWord)
-// 		for _, word := range profaneWords {
-// 			if s == word {
-// 				sentenceArr[i] = "****"
-// 			}
-// 		}
-// 	}
-// 	cS = strings.Join(sentenceArr, " ")
-
-// 	fmt.Printf("Value: %s\n", cS)
-// 	return cS
-// }

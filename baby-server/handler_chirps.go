@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type chirpResponse struct {
+type ChirpResponse struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -48,7 +49,7 @@ func (cfg *apiConfig) CreateChirpHandler(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, 500, "Couldn't create chirp")
 		return
 	}
-	response := chirpResponse{
+	response := ChirpResponse{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
@@ -86,4 +87,28 @@ func getCleanedBody(body string, badWords map[string]struct{}) string {
 	}
 	cleaned := strings.Join(words, " ")
 	return cleaned
+}
+
+func (cfg *apiConfig) GetAllChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	//no params needed this is just a get
+
+	response := []ChirpResponse{}
+
+	chirps, err := cfg.db.GetChirpByDate(r.Context())
+	if err != nil {
+		log.Println(err)
+		respondWithError(w, http.StatusServiceUnavailable, "Unable to retrieve chirps ")
+		return
+	}
+	for _, c := range chirps {
+		response = append(response, ChirpResponse{
+			ID:        c.ID,
+			CreatedAt: c.CreatedAt,
+			UpdatedAt: c.UpdatedAt,
+			UserID:    c.UserID,
+			Body:      c.Body,
+		})
+	}
+	respondWithJson(w, 200, response)
+
 }

@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
 	"net/http"
 	"net/mail"
 	"time"
 
+	"github.com/dfodeker/learn-go/baby-server/internal/auth"
+	"github.com/dfodeker/learn-go/baby-server/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +23,8 @@ type User struct {
 
 func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -28,6 +32,7 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Printf("Error Decoding Params: %s", err)
 		respondWithError(w, 400, "Please provide a valid request body")
+		return
 	}
 	email := params.Email
 	_, err = mail.ParseAddress(params.Email)
@@ -35,11 +40,22 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, 400, "Please Provide a Valid Email")
 		return
 	}
+	pass := params.Password
+	hash, err := auth.HashPassword(pass)
+	if err != nil {
+		respondWithError(w, 500, "unable to create your account")
+		return
+	}
 
-	user, err := cfg.db.CreateUser(r.Context(), email)
+	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          email,
+		HashedPassword: hash,
+	})
 	if err != nil {
 		msg := fmt.Sprintf("%s", err)
+		log.Println(msg)
 		respondWithError(w, 400, "Error Creating User:"+msg)
+		return
 
 	}
 

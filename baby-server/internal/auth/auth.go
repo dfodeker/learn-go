@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -94,3 +95,8 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 
 //Use the jwt.ParseWithClaims function to validate the signature of the JWT
 //and extract the claims into a *jwt.Token struct. An error will be returned if the token is invalid or has expired.
+//Bearer TOKEN_STRING
+
+func GetBearerToken(headers http.Header) (string, error) {
+
+}

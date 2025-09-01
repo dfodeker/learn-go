@@ -111,6 +111,34 @@ func TestValidateJWT(t *testing.T) {
 	}
 }
 
+func TestMakeRefreshToken(t *testing.T) {
+	//function performs a single action
+	tests := []struct {
+		name      string
+		wantValue bool
+		wantErr   bool
+	}{
+		{
+			name:      "Return Token",
+			wantValue: true,
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRefreshToken, err := MakeRefreshToken()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MakeRefreshToken() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotRefreshToken == "" {
+				t.Errorf("MakeRefreshToken() Expected Refresh Token, recieved %v", gotRefreshToken)
+				return
+			}
+		})
+	}
+}
+
 func TestGetBearerToken(t *testing.T) {
 	userID := uuid.New()
 	validToken, _ := MakeJWT(userID, "secret", time.Hour)

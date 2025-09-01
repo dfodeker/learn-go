@@ -19,6 +19,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,19 +32,19 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error Decoding Params: %s", err)
-		respondWithError(w, 400, "Please provide a valid request body")
+		respondWithError(w, 400, "Please provide a valid request body", err)
 		return
 	}
 	email := params.Email
 	_, err = mail.ParseAddress(params.Email)
 	if err != nil {
-		respondWithError(w, 400, "Please Provide a Valid Email")
+		respondWithError(w, 400, "Please Provide a Valid Email", err)
 		return
 	}
 	pass := params.Password
 	hash, err := auth.HashPassword(pass)
 	if err != nil {
-		respondWithError(w, 500, "unable to create your account")
+		respondWithError(w, 500, "unable to create your account", err)
 		return
 	}
 
@@ -54,7 +55,7 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		msg := fmt.Sprintf("%s", err)
 		log.Println(msg)
-		respondWithError(w, 400, "Error Creating User:"+msg)
+		respondWithError(w, http.StatusBadRequest, "Error Creating User", err)
 		return
 
 	}
@@ -65,6 +66,6 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
 	}
-	respondWithJson(w, 201, userResponse)
+	respondWithJSON(w, 201, userResponse)
 
 }

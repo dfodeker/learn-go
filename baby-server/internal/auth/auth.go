@@ -3,17 +3,15 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-//func HashPassword(password string) (string, error)
-//Hash the password using the bcrypt.GenerateFromPassword function.
-//  Bcrypt is a secure hash function that is intended for use with passwords.
 
 func HashPassword(password string) (string, error) {
 	// thi
@@ -45,47 +43,47 @@ const (
 	TokenTypeAccess TokenType = "chirpy-access"
 )
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
-
-	//jwt.NewWithClaims
-	now := time.Now().UTC()
-
-	claims := jwt.RegisteredClaims{
+func MakeJWT(
+	userID uuid.UUID,
+	tokenSecret string,
+	expiresIn time.Duration,
+) (string, error) {
+	signingKey := []byte(tokenSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    string(TokenTypeAccess),
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(expiresIn)),
+		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
 		Subject:   userID.String(),
-	}
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return t.SignedString([]byte(tokenSecret))
-
+	})
+	return token.SignedString(signingKey)
 }
 
 //func CheckPasswordHash(password, hash string) error
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-
 	claimsStruct := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&claimsStruct,
-		func(t *jwt.Token) (any, error) { return []byte(tokenSecret), nil },
+		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
 	)
 	if err != nil {
 		return uuid.Nil, err
 	}
+
 	userIDString, err := token.Claims.GetSubject()
 	if err != nil {
 		return uuid.Nil, err
 	}
+
 	issuer, err := token.Claims.GetIssuer()
 	if err != nil {
 		return uuid.Nil, err
 	}
-
 	if issuer != string(TokenTypeAccess) {
 		return uuid.Nil, errors.New("invalid issuer")
 	}
+
 	id, err := uuid.Parse(userIDString)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
@@ -93,10 +91,21 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	return id, nil
 }
 
-//Use the jwt.ParseWithClaims function to validate the signature of the JWT
-//and extract the claims into a *jwt.Token struct. An error will be returned if the token is invalid or has expired.
-//Bearer TOKEN_STRING
-
 func GetBearerToken(headers http.Header) (string, error) {
+	authorization := headers.Get("Authorization")
+	if authorization == "" {
+		return "", errors.New("missing authorization header")
+	}
 
+	if !strings.HasPrefix(authorization, "Bearer ") {
+		return "", errors.New("expected Bearer authorization scheme")
+	}
+
+	// Trim off the prefix and whitespace
+	tokenString := strings.TrimSpace(strings.TrimPrefix(authorization, "Bearer "))
+	if tokenString == "" {
+		return "", errors.New("missing bearer token")
+	}
+	log.Printf("returning token: %s", tokenString)
+	return tokenString, nil
 }

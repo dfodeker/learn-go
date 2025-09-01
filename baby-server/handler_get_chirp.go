@@ -10,20 +10,15 @@ func (cfg *apiConfig) getChirpByID(w http.ResponseWriter, r *http.Request) {
 
 	param := r.PathValue("chirpID")
 
-	if len(param) < 10 {
-		respondWithError(w, http.StatusForbidden, "Please provide a valid ID")
-		return
-	}
-
 	chirpID, err := uuid.Parse(param)
 	if err != nil {
-		respondWithError(w, http.StatusForbidden, "Invalid UUID format")
+		respondWithError(w, http.StatusForbidden, "Invalid UUID format", err)
 		return
 	}
 
 	chirp, err := cfg.db.GetChirpByID(r.Context(), chirpID)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Unable to Get Chirp")
+		respondWithError(w, http.StatusNotFound, "Unable to Get Chirp", err)
 		return
 	}
 
@@ -35,5 +30,5 @@ func (cfg *apiConfig) getChirpByID(w http.ResponseWriter, r *http.Request) {
 		Body:      chirp.Body,
 	}
 
-	respondWithJson(w, 200, resp)
+	respondWithJSON(w, 200, resp)
 }

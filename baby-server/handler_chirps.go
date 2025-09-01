@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/dfodeker/learn-go/baby-server/internal/auth"
 	"github.com/dfodeker/learn-go/baby-server/internal/database"
 	"github.com/google/uuid"
 )
@@ -22,31 +23,44 @@ type ChirpResponse struct {
 }
 
 func (cfg *apiConfig) CreateChirpHandler(w http.ResponseWriter, r *http.Request) {
+
+	bearerToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Authentication credentials are missing or invalid.", err)
+		return
+	}
+
+	user, err := auth.ValidateJWT(bearerToken, cfg.signingKey)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Authentication credentials are invalid.", err)
+		return
+	}
+
+	log.Printf("User: %s", user)
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := &parameters{}
-	err := decoder.Decode(params)
+	err = decoder.Decode(params)
 	if err != nil {
-		msg := fmt.Sprintf("%s", err)
-		respondWithError(w, 400, "Couldn't decode parameters: "+msg)
+
+		respondWithError(w, 400, "Couldn't decode parameters ", err)
 		return
 	}
 	cleaned, err := validateChirp(params.Body)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, http.StatusBadRequest, "unable to validate chirp", err)
 		return
 	}
 	chirpReq := database.CreateChirpParams{
-		UserID: params.UserID,
+		UserID: user,
 		Body:   cleaned,
 	}
 
 	chirp, err := cfg.db.CreateChirp(r.Context(), chirpReq)
 	if err != nil {
-		respondWithError(w, 500, "Couldn't create chirp")
+		respondWithError(w, 500, "Couldn't create chirp", err)
 		return
 	}
 	response := ChirpResponse{
@@ -57,7 +71,7 @@ func (cfg *apiConfig) CreateChirpHandler(w http.ResponseWriter, r *http.Request)
 		Body:      chirp.Body,
 	}
 
-	respondWithJson(w, 201, response)
+	respondWithJSON(w, 201, response)
 }
 
 func validateChirp(body string) (string, error) {
@@ -97,7 +111,7 @@ func (cfg *apiConfig) GetAllChirpsHandler(w http.ResponseWriter, r *http.Request
 	chirps, err := cfg.db.GetChirpByDate(r.Context())
 	if err != nil {
 		log.Println(err)
-		respondWithError(w, http.StatusServiceUnavailable, "Unable to retrieve chirps ")
+		respondWithError(w, http.StatusServiceUnavailable, "Unable to retrieve chirps ", err)
 		return
 	}
 	for _, c := range chirps {
@@ -109,6 +123,6 @@ func (cfg *apiConfig) GetAllChirpsHandler(w http.ResponseWriter, r *http.Request
 			Body:      c.Body,
 		})
 	}
-	respondWithJson(w, 200, response)
+	respondWithJSON(w, 200, response)
 
 }

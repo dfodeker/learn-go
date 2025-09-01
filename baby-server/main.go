@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	signingKey     string
 }
 
 func main() {
@@ -29,6 +30,10 @@ func main() {
 	platform := os.Getenv("PLATFORM")
 	if platform == "" {
 		log.Fatal("PLATFORM Must BE SET")
+	}
+	signingKey := os.Getenv("SIGNING_KEY")
+	if signingKey == "" {
+		log.Fatal("SIGNING_KEY Must BE SET")
 	}
 
 	mux := http.NewServeMux()

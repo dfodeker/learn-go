@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"log"
 	"net/http"
 )
@@ -11,29 +11,29 @@ type errs struct {
 	Error string `json:"error"`
 }
 
-func respondWithError(w http.ResponseWriter, code int, msg string) {
-	w.WriteHeader(code)
-	errorMsg := errs{
-		Error: msg,
-	}
-	s, err := json.Marshal(errorMsg)
+func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
-		log.Printf("Error Decoding Params: %s", err)
-		http.Error(w, `{"error":"Something went wrong"}`, 500)
+		log.Println(err)
 	}
-	w.Write(s)
-
+	if code > 499 {
+		log.Printf("Responding with 5XX error: %s", msg)
+	}
+	type errorResponse struct {
+		Error string `json:"error"`
+	}
+	respondWithJSON(w, code, errorResponse{
+		Error: msg,
+	})
 }
 
-func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	s, err := json.Marshal(payload)
+	dat, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("Error Decoding Params: %s", err)
-		http.Error(w, `{"error":"Something went wrong"}`, 500)
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
 	}
-	fmt.Printf("final Value %s\n", s)
-	w.Write(s)
+	w.WriteHeader(code)
+	w.Write(dat)
 }

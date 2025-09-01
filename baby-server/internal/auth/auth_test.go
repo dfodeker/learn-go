@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -108,4 +109,81 @@ func TestValidateJWT(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	userID := uuid.New()
+	validToken, _ := MakeJWT(userID, "secret", time.Hour)
+	invalidToken := "Invalid.Token"
+
+	// var validHeader http.Header
+	// validHeader.Set("Authorization", "Bearer "+validToken)
+	validHeader := http.Header{
+		"Authorization": []string{"Bearer " + validToken},
+	}
+	invalidHeader := http.Header{
+		"Authorization": []string{"Bearer" + invalidToken},
+	}
+	justBearer := http.Header{
+		"Authorization": []string{"Bearer "}, // no space, no token
+	}
+	nonJwt := http.Header{
+		"Authorization": []string{"Bearer " + invalidToken}, // no space, no token
+	}
+	bearerNotPresent := http.Header{
+		"Authorization": []string{invalidToken},
+	}
+
+	tests := []struct {
+		name            string
+		header          http.Header
+		wantTokenString string
+		wantErr         bool
+	}{
+		{
+			name:            "Valid Bearer",
+			header:          validHeader,
+			wantTokenString: validToken,
+			wantErr:         false,
+		},
+		{
+			name:            "Invalid Bearer",
+			header:          invalidHeader,
+			wantTokenString: "",
+			wantErr:         true,
+		},
+		{
+			name:            "Bearer Present But No Token",
+			header:          justBearer,
+			wantTokenString: "",
+			wantErr:         true,
+		},
+		{
+			name:            "NonJWT",
+			header:          nonJwt,
+			wantTokenString: invalidToken,
+			wantErr:         false,
+		},
+		{
+			name:            "Bearer not Present",
+			header:          bearerNotPresent,
+			wantTokenString: "",
+			wantErr:         true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotTokenString, err := GetBearerToken(tt.header)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetBearerToken() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantTokenString != gotTokenString {
+
+				t.Errorf("GetBearerToken() gotTokenString = %v, want %v", gotTokenString, tt.wantTokenString)
+			}
+		})
+	}
+
 }

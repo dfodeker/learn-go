@@ -18,6 +18,11 @@ type RefreshTokenParams struct {
 }
 
 func (cfg *apiConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		User
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -28,8 +33,6 @@ func (cfg *apiConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "bad request", err)
 	}
-
-	expires := 3600
 
 	email := params.Email
 	_, err = mail.ParseAddress(params.Email)
@@ -54,13 +57,12 @@ func (cfg *apiConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dur := time.Second * time.Duration(expires)
-	token, err := auth.MakeJWT(user.ID, cfg.signingKey, dur)
+	accessToken, err := auth.MakeJWT(user.ID, cfg.signingKey, time.Hour)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
-	refresh, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+	_, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    user.ID,
 		ExpiresAt: refreshTime,
@@ -70,15 +72,16 @@ func (cfg *apiConfig) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := User{
-		ID:           user.ID,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
-		Email:        user.Email,
-		Token:        token,
-		RefreshToken: refresh.Token,
-	}
-	respondWithJSON(w, http.StatusOK, response)
+	respondWithJSON(w, http.StatusOK, response{
+		User: User{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Email:     user.Email,
+		},
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+	})
 
 }
 

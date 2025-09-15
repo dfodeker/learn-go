@@ -36,7 +36,6 @@ func (cfg *apiConfig) CreateChirpHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	log.Printf("User: %s", user)
 	type parameters struct {
 		Body string `json:"body"`
 	}

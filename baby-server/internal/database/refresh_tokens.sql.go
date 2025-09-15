@@ -13,9 +13,14 @@ import (
 )
 
 const createRefreshToken = `-- name: CreateRefreshToken :one
-
-insert into refresh_tokens (token, user_id, expires_at, revoked_at)
-values ($1, $2, $3, NULL)
+INSERT INTO refresh_tokens (token, created_at, updated_at, user_id, expires_at)
+VALUES (
+    $1,
+    NOW(),
+    NOW(),
+    $2,
+    $3
+)
 RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
 `
 
@@ -25,12 +30,6 @@ type CreateRefreshTokenParams struct {
 	ExpiresAt time.Time
 }
 
-// token: the primary key - it's just a string
-// created_at
-// updated_at
-// user_id: foreign key that deletes the row if the user is deleted
-// expires_at: the timestamp when the token expires
-// revoked_at:
 func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error) {
 	row := q.db.QueryRowContext(ctx, createRefreshToken, arg.Token, arg.UserID, arg.ExpiresAt)
 	var i RefreshToken
@@ -45,27 +44,30 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 	return i, err
 }
 
-const getRefreshTokenByToken = `-- name: GetRefreshTokenByToken :one
-SELECT token, created_at, updated_at, user_id, expires_at, revoked_at FROM refresh_tokens WHERE token = $1
+const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
+SELECT users.id, users.email, users.created_at, users.updated_at, users.hashed_password FROM users
+JOIN refresh_tokens ON users.id = refresh_tokens.user_id
+WHERE refresh_tokens.token = $1
+AND revoked_at IS NULL
+AND expires_at > NOW()
 `
 
-func (q *Queries) GetRefreshTokenByToken(ctx context.Context, token string) (RefreshToken, error) {
-	row := q.db.QueryRowContext(ctx, getRefreshTokenByToken, token)
-	var i RefreshToken
+func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromRefreshToken, token)
+	var i User
 	err := row.Scan(
-		&i.Token,
+		&i.ID,
+		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.UserID,
-		&i.ExpiresAt,
-		&i.RevokedAt,
+		&i.HashedPassword,
 	)
 	return i, err
 }
 
 const revokeRefreshToken = `-- name: RevokeRefreshToken :one
-UPDATE refresh_tokens
-SET revoked_at = NOW(), updated_at = NOW()
+UPDATE refresh_tokens SET revoked_at = NOW(),
+updated_at = NOW()
 WHERE token = $1
 RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
 `

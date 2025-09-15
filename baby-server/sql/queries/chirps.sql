@@ -14,3 +14,12 @@ SELECT * FROM chirps WHERE id = $1;
 
 -- name: DeleteChirpByID :exec
 DELETE FROM chirps WHERE id = $1;
+
+
+-- name: upgradeUserToChirpyRed :one
+UPDATE users
+SET 
+    is_chirpy_red = TRUE,
+    updated_at = now()
+WHERE id = $1
+RETURNING *;

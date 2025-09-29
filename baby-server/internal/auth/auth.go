@@ -123,3 +123,21 @@ func MakeRefreshToken() (string, error) {
 
 	return encodedString, nil
 }
+
+func GetAPIKey(headers http.Header) (string, error) {
+	// shape Authorization: ApiKey THE_KEY_HERE
+	authorization := headers.Get("Authorization")
+	if authorization == "" {
+		return "", errors.New("missing authorization header")
+	}
+	if !strings.HasPrefix(authorization, "ApiKey ") {
+		return "", errors.New("expected ApiKey ")
+	}
+	tokenString := strings.TrimSpace(strings.TrimPrefix(authorization, "ApiKey "))
+	if tokenString == "" {
+		return "", errors.New("missing ApiKey ")
+	}
+	log.Printf("returning token: %s", tokenString)
+	return tokenString, nil
+
+}

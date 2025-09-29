@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/dfodeker/learn-go/baby-server/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -26,9 +27,21 @@ type eventData struct {
 const upgradeString = "user.upgraded"
 
 func (cfg *apiConfig) polkaWebhookHandler(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Authentication credentials are missing or invalid v.", err)
+		return
+	}
+
+	if apiKey != cfg.polkaApiKey {
+		log.Printf("Polka Key:%s", cfg.polkaApiKey)
+		respondWithError(w, http.StatusUnauthorized, "Authentication credentials are missing or invalid.", err)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	event := UpgradeEvent{}
-	err := decoder.Decode(&event)
+	err = decoder.Decode(&event)
 	if err != nil {
 		log.Printf("Error Decoding Params: %s", err)
 		respondWithError(w, 400, "Please provide a valid request body", err)

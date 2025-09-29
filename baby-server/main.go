@@ -17,6 +17,7 @@ type apiConfig struct {
 	db             *database.Queries
 	platform       string
 	signingKey     string
+	polkaApiKey    string
 }
 
 func main() {
@@ -35,6 +36,10 @@ func main() {
 	if signingKey == "" {
 		log.Fatal("SIGNING_KEY Must BE SET")
 	}
+	polkaApiKey := os.Getenv("POLKA_KEY")
+	if polkaApiKey == "" {
+		log.Fatal("POLKA_KEY Must BE SET")
+	}
 
 	mux := http.NewServeMux()
 
@@ -46,8 +51,10 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCFg := apiConfig{
-		db:       dbQueries,
-		platform: platform,
+		db:          dbQueries,
+		platform:    platform,
+		signingKey:  signingKey,
+		polkaApiKey: polkaApiKey,
 	}
 	fileServer := http.FileServer(http.Dir("."))
 

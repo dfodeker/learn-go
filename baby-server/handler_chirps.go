@@ -104,8 +104,57 @@ func getCleanedBody(body string, badWords map[string]struct{}) string {
 
 func (cfg *apiConfig) GetAllChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	//no params needed this is just a get
-
 	response := []ChirpResponse{}
+	s := r.URL.Query().Get("author_id")
+	sort := r.URL.Query().Get("sort")
+	if sort == "desc" {
+		chirps, err := cfg.db.GetChirpByDateDesc(r.Context())
+		if err != nil {
+			log.Println(err)
+			respondWithError(w, http.StatusServiceUnavailable, "Unable to retrieve chirps ", err)
+			return
+		}
+		for _, c := range chirps {
+			response = append(response, ChirpResponse{
+				ID:        c.ID,
+				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
+				UserID:    c.UserID,
+				Body:      c.Body,
+			})
+		}
+		respondWithJSON(w, 200, response)
+		return
+	}
+
+	if s != "" {
+
+		//searching for author
+		userId, err := uuid.Parse(s)
+		if err != nil {
+			respondWithError(w, http.StatusForbidden, "Invalid UUID format", err)
+			return
+		}
+
+		chirps, err := cfg.db.GetAuthorsChirps(r.Context(), userId)
+		if err != nil {
+			log.Println(err)
+			respondWithError(w, http.StatusServiceUnavailable, "Unable to retrieve chirps ", err)
+			return
+
+		}
+		for _, c := range chirps {
+			response = append(response, ChirpResponse{
+				ID:        c.ID,
+				CreatedAt: c.CreatedAt,
+				UpdatedAt: c.UpdatedAt,
+				UserID:    c.UserID,
+				Body:      c.Body,
+			})
+		}
+		respondWithJSON(w, 200, response)
+		return
+	}
 
 	chirps, err := cfg.db.GetChirpByDate(r.Context())
 	if err != nil {
